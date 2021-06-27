@@ -25,9 +25,21 @@
 
 <script>
   
-  function cover_form(){
+  function cover_preview(){
     
+    const selector = document.querySelector('#cover')
+    const lable = document.querySelector('.custom-file-label')
+    const picture = document.querySelector('.picture')
+  
+    lable.textContent = selector.files[0].name
     
+    const picture_file = new FileReader()
+    
+    picture_file.readAsDataURL(selector.files[0])
+    
+    picture_file.onload = (e) => {
+      picture.src = e.target.result
+    }
   }
 </script>
 </body>

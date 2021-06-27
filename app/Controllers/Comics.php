@@ -74,18 +74,17 @@ class Comics extends BaseController
 
     //get picture file
     $picture = $this ->request ->getFile('cover');
-    
-    if ($picture ->getError() == 4) {
-     
-      $pictureName = 'default';
-    }
-    else {
-    //get random picture name
-    $pictureName = $picture ->getRandomName();
 
-    //move picture to public/img
-    $picture ->move('img', $pictureName);
-      
+    if ($picture ->getError() == 4) {
+
+      $pictureName = 'default.jpg';
+    } else {
+      //get random picture name
+      $pictureName = $picture ->getRandomName();
+
+      //move picture to public/img
+      $picture ->move('img', $pictureName);
+
     }
 
 
@@ -107,6 +106,16 @@ class Comics extends BaseController
 
 
   public function delete($id) {
+
+    //get comic cover name
+    $comic = $this ->comicsModel ->find($id);
+
+    //delete picture file
+    if ($comic['cover'] != 'default.jpg') {
+
+      unlink('img/'.$comic['cover']);
+    }
+
 
     $this ->comicsModel ->delete($id);
 
@@ -145,15 +154,14 @@ class Comics extends BaseController
         'errors' => [
           'required' => '{field} should be filled.',
           'is_unique' => '{field} has registered.'
-        ],
-        'cover' => [
-          'rules' => 'required | max_size[cover,1024] mime_in[cover,image/png,image/jpg,image/jpeg] | is_image[cover]',
-          'errors' => [
-            'required' => '{field} should be filled.',
-            'max_size' => 'picture is too large',
-            'mime_in' => 'file format is not an picture',
-            'is_image' => 'file format is not an picture'
-          ]
+        ]
+      ],
+      'cover' => [
+        'rules' => 'max_size[cover,1024]|mime_in[cover,image/png,image/jpg,image/jpeg]|is_image[cover]',
+        'errors' => [
+          'max_size' => 'picture is too large',
+          'mime_in' => 'file format is not an picture',
+          'is_image' => 'file format is not an picture'
         ]
       ]
     ])) {
@@ -165,8 +173,23 @@ class Comics extends BaseController
       return redirect() ->to('/comics/edit/'.$slug) ->withInput();
 
     }
+      
+    $picture = $this ->request ->getFile('cover');
+    
+    $old_picture = $this ->request ->getVar('old_cover');
 
-    $slug = url_title($this ->request ->getVar('title'), '-', true);
+    if ($picture ->getError() == 4){
+      $picture_name = $old_picture;
+    }
+    else {
+      $picture_name = $picture ->getRandomName();
+      
+      $picture ->move('img',$picture_name);
+      
+      unlink('img/'.$old_picture);
+    }
+
+      $slug = url_title($this ->request ->getVar('title'), '-', true);
 
 
     $this ->comicsModel ->update($id, [
@@ -175,7 +198,7 @@ class Comics extends BaseController
       'slug' => $slug,
       'author' => $this ->request ->getVar('author'),
       'publisher' => $this ->request ->getVar('publisher'),
-      'cover' => $this ->request ->getVar('cover')
+      'cover' => $picture_name
     ]);
 
     session() ->setFlashData('notif', 'Data success edited.');

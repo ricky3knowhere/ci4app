@@ -5,7 +5,10 @@
   <div class="row">
     <div class="col">
       <h2>Home</h2>
-      <?php d($id) ?>
+      <?php
+      $faker = \Faker\Factory::create('it_IT');
+	    d($faker ->name);
+       ?>
     </div>
   </div>
 </div>
